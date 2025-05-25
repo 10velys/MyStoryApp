@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Share your stories with the Dicoding community through Story App"
+    />
+    <meta name="theme-color" content="#4A6572" />
+
+    <link rel="shortcut icon" href="favicon.png" />
+    <link rel="manifest" href="./app.webmanifest" />
+
+    <link rel="preload" href="app.bundle.js" as="script" />
+    <link rel="preload" href="styles.css" as="style" />
+    <link rel="preload" href="favicon.png" as="image" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <title>Story App</title>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    
+    <div class="offline-indicator">
+      ⚠️ Anda sedang offline. Beberapa fitur mungkin terbatas.
+    </div>
+
+    <header class="app-shell">
+      <div class="main-header container">
+        <a class="brand-name" href="#/home">Story App</a>
+
+        <nav id="navigation-drawer" class="navigation-drawer app-shell">
+          <ul id="nav-list" class="nav-list">
+            <li>
+              <a href="#/home"><i class="fas fa-home"></i> Home</a>
+            </li>
+            <li class="add-story-nav-item">
+              <a href="#/add"><i class="fas fa-plus-circle"></i> Add Story</a>
+            </li>
+            <li class="bookmarks-nav-item">
+              <a href="#/bookmarks"><i class="fas fa-bookmark"></i> My Bookmarks</a>
+            </li>
+            <li>
+              <a href="#/about"><i class="fas fa-info-circle"></i> About</a>
+            </li>
+            <li id="subscribe-nav-item" style="display: none;">
+              <a id="subscribe-notification-btn" href="#">
+                <i class="fas fa-bell"></i> Subscribe
+              </a>
+            </li>
+            <li class="auth-nav-item" id="login-nav-item">
+              <a href="#/login" class="auth-button"
+                ><i class="fas fa-sign-in-alt"></i> Login</a
+              >
+            </li>
+            <li
+              class="auth-nav-item"
+              id="profile-nav-item"
+              style="display: none"
+            >
+              <a href="#/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </li>
+          </ul>
+        </nav>
+
+        <button
+          id="drawer-button"
+          class="drawer-button app-shell"
+          aria-label="Toggle navigation menu"
+        >
+          ☰
+        </button>
+      </div>
+    </header>
+
+    <main id="main-content" class="main-content" tabindex="-1">
+      <div class="app-shell-content">
+        <div class="loading-screen">
+          <div class="spinner"></div>
+          <p>Loading Story App...</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-shell">
+      <div class="container">
+        <p>&copy; 2025 Story App - Dicoding Submission</p>
+      </div>
+    </footer>
+
+    <template id="story-item-template">
+      <div class="story-card">
+        <img class="story-image" src="" alt="" onerror="this.src='favicon.png'; this.alt='Image not available offline';" />
+        <div class="story-card-content">
+          <h3 class="story-title"></h3>
+          <p class="story-description"></p>
+          <div class="location-indicator">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="location-name"></span>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="camera-component-template">
+      <div id="camera-container" class="camera-container">
+        <video
+          id="camera-stream"
+          class="camera-stream"
+          autoplay
+          playsinline
+        ></video>
+        <img id="photo-preview" class="photo-preview" alt="Preview foto" />
+        <div class="camera-controls">
+          <button id="capture-button" class="btn btn-primary">
+            Ambil Foto
+          </button>
+          <button id="switch-camera-button" class="btn btn-secondary">
+            Switch Camera
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template id="map-component-template">
+      <div id="map-container" class="map-container"></div>
+    </template>
+
+    <div id="loading-indicator" class="loading-indicator app-shell" style="display: none;">
+      <div class="spinner"></div>
+      <p>Loading content...</p>
+    </div>
+    
+    <template id="offline-content-template">
+      <div class="offline-content">
+        <div class="offline-icon">
+          <i class="fas fa-wifi"></i>
+        </div>
+        <h2>Konten Tidak Tersedia Offline</h2>
+        <p>Koneksi internet diperlukan untuk mengakses konten ini.</p>
+        <button onclick="window.location.reload()" class="btn btn-primary">
+          Coba Lagi
+        </button>
+      </div>
+    </template>
+
+    <style>
+      .app-shell-content {
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loading-screen {
+        text-align: center;
+        padding: 40px;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4A6572;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .offline-indicator {
+        display: none;
+        background: #ffc107;
+        color: #212529;
+        text-align: center;
+        padding: 10px;
+        font-weight: 500;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+      }
+
+      body.offline-mode .offline-indicator {
+        display: block;
+      }
+
+      body.offline-mode .main-header {
+        margin-top: 40px;
+      }
+
+      .offline-content {
+        text-align: center;
+        padding: 60px 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin: 20px auto;
+        max-width: 500px;
+      }
+
+      .offline-content .offline-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+      }
+
+      .offline-content h2 {
+        color: #495057;
+        margin-bottom: 15px;
+      }
+
+      .offline-content p {
+        color: #6c757d;
+        margin-bottom: 25px;
+        line-height: 1.5;
+      }
+
+      .noscript-message {
+        text-align: center;
+        padding: 60px 20px;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 8px;
+        margin: 20px;
+      }
+
+      .noscript-message h2 {
+        margin-bottom: 15px;
+      }
+
+      .bookmarks-nav-item {
+        position: relative;
+      }
+
+      .bookmarks-nav-item a {
+        color: #4A6572;
+        text-decoration: none;
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+
+      .bookmarks-nav-item a:hover {
+        background-color: #f8f9fa;
+        color: #0084ff;
+      }
+
+      .bookmarks-nav-item a i {
+        color: #ffc107;
+        font-size: 1.1rem;
+      }
+
+      .nav-list li a.active {
+        background-color: #4A6572;
+        color: white;
+      }
+
+      .nav-list li a.active i {
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .nav-list {
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .bookmarks-nav-item {
+          order: 2;
+        }
+
+        .add-story-nav-item {
+          order: 1;
+        }
+      }
+    </style>
+
+    <script src="app.bundle.js" type="module"></script>
+    
+    <noscript>
+      <div class="noscript-message">
+        <h2>JavaScript Dinonaktifkan</h2>
+        <p>Aplikasi ini memerlukan JavaScript untuk berfungsi. Mohon aktifkan JavaScript di browser Anda.</p>
+      </div>
+    </noscript>
+  </body>
+</html>
